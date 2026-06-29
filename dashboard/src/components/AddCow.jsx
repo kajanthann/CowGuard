@@ -48,7 +48,7 @@ const AddCow = () => {
 //   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-md">
+    <div className="max-w-2xl mx-auto bg-white p-6 rounded-xl border border-gray-500 shadow-md">
 
       <h2 className="text-2xl font-bold mb-6 text-gray-800">
         Add New Cow
@@ -63,7 +63,7 @@ const AddCow = () => {
           placeholder="Cow ID (e.g. COW_01)"
           value={form.cowId}
           onChange={handleChange}
-          className="w-full p-3 border rounded-lg"
+          className="w-full p-3 border border-gray-300 rounded-lg"
           required
         />
 
@@ -74,7 +74,7 @@ const AddCow = () => {
           placeholder="Cow Name"
           value={form.name}
           onChange={handleChange}
-          className="w-full p-3 border rounded-lg"
+          className="w-full p-3 border border-gray-300 rounded-lg"
           required
         />
 
@@ -85,7 +85,7 @@ const AddCow = () => {
           placeholder="Breed (e.g. Jersey)"
           value={form.breed}
           onChange={handleChange}
-          className="w-full p-3 border rounded-lg"
+          className="w-full p-3 border border-gray-300 rounded-lg"
         />
 
         {/* Device ID */}
@@ -95,7 +95,7 @@ const AddCow = () => {
           placeholder="Device ID (ESP32 MAC)"
           value={form.deviceId}
           onChange={handleChange}
-          className="w-full p-3 border rounded-lg"
+          className="w-full p-3 border border-gray-300 rounded-lg"
           required
         />
 
