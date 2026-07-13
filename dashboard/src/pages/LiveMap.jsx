@@ -54,7 +54,7 @@ const LiveMap = () => {
       </div>
 
       {/* Map */}
-      <div className="h-[38vh] md:flex-1 md:h-auto rounded-xl overflow-hidden border border-gray-300">
+      <div className="h-[38vh] md:flex-1 md:h-auto rounded-xl overflow-hidden border m-5 border-gray-300">
         <Boundary />
       </div>
       {/* Mobile Summary */}

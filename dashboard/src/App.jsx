@@ -26,7 +26,7 @@ const App = () => {
       <Route
         path="/*"
         element={
-          <div className="flex h-screen overflow-hidden bg-gray-50">
+          <div className="flex h-screen overflow-hidden">
             {/* Desktop Sidebar */}
             <aside
               className="

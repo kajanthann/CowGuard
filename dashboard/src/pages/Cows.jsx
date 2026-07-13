@@ -43,7 +43,7 @@ const Cows = () => {
   return (
     <div className="w-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between gap-3 mb-6">
+      <div className="flex flex-row justify-between gap-3 mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-green-600">
             Cows <span className="text-xs text-gray-500">({enrichedCows.length})</span>
@@ -53,7 +53,7 @@ const Cows = () => {
 
         <button
           onClick={() => setIsOpen(true)}
-          className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm"
+          className="flex items-center justify-center gap-2 bg-green-600 text-white m-3 px-3 py-2 rounded-lg hover:bg-green-700 text-sm"
         >
           <FaPlus />
           Add Cow
@@ -147,7 +147,7 @@ const Cows = () => {
 
           <tbody>
             {enrichedCows.map((cow) => (
-              <tr key={cow.cowId} className="border-b hover:bg-gray-50">
+              <tr key={cow.cowId} className="border-b border-gray-300 hover:bg-gray-50">
                 <td className="p-3 font-mono">{cow.cowId}</td>
                 <td className="p-3">{cow.name}</td>
                 <td className="p-3">{cow.breed}</td>

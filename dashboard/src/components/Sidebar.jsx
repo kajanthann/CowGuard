@@ -1,6 +1,10 @@
 import React, { useContext } from "react";
 import { AppContext } from "../context/AppContext"; // adjust path to match your project
- 
+ import { SiSwisscows } from "react-icons/si";
+ import { GiCow } from "react-icons/gi";
+ import { AiFillAlert } from "react-icons/ai";
+ import { BsBatteryLow } from "react-icons/bs";
+
 const LOW_BATTERY_THRESHOLD = 20;
  
 // Shoelace formula → area in m² for lat/lng polygon (approx, good enough for small areas)
@@ -41,10 +45,17 @@ const Sidebar = () => {
     <div className="w-80 h-full border-r border-gray-200 flex flex-col overflow-y-auto">
  
       {/* ─── Header ───────────────────────────── */}
-      <header className="border-b border-gray-200 px-6 py-4 flex items-center gap-2">
-        <h1 className="text-lg font-semibold text-gray-800">
-          CowGuard
-        </h1>
+      <header className="border-b border-gray-200 px-6 py-4 flex items-center">
+        <div className="flex items-center gap-1">
+          <SiSwisscows className="text-3xl text-green-600" />
+          <span className="border-r border-2 border-gray-400 h-8"></span>
+          <h1 className="text-3xl font-electrolize font-bold tracking-wide text-green-600">
+            Cow
+          </h1>
+          <span className="text-3xl font-electrolize font-bold tracking-wide text-gray-500">
+            Guard
+          </span>
+        </div>
       </header>
  
       {/* ─── Boundary Stats ───────────────────── */}
@@ -148,7 +159,7 @@ const Sidebar = () => {
  
         <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xl">🐄</span>
+            <GiCow className="text-3xl text-gray-700" />
             <div>
               <p className="text-sm font-semibold text-gray-800">
                 {totalCows} Cows Tracked
@@ -175,7 +186,7 @@ const Sidebar = () => {
           }`}
         >
           <span className="text-xl">
-            {outsideCows.length > 0 ? "🚨" : "✅"}
+            {outsideCows.length > 0 ? <AiFillAlert className="text-red-600" /> : <GiCow />}
           </span>
  
           <div>
@@ -212,7 +223,7 @@ const Sidebar = () => {
           }`}
         >
           <span className="text-xl">
-            {lowBatteryCows.length > 0 ? "🔋" : "🔌"}
+            {lowBatteryCows.length > 0 ? <BsBatteryLow className="text-yellow-600" /> : <GiCow className="text-green-600" />}
           </span>
  
           <div>

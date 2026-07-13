@@ -10,6 +10,8 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { AppContext } from "../context/AppContext.jsx";
+import { renderToStaticMarkup } from "react-dom/server";
+import { PiCowThin } from "react-icons/pi";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -35,20 +37,40 @@ function cornerIcon(index) {
 }
 
 function cowIcon(inside, isSelected) {
-  const size = isSelected ? 38 : 26;
-  const font = isSelected ? 20 : 14;
+  const size = isSelected ? 30 : 25;
+
   const ring = isSelected
-    ? `box-shadow:0 0 0 3px ${inside ? "#4ade80" : "#f87171"},0 4px 12px rgba(0,0,0,0.3);`
-    : "box-shadow:0 2px 8px rgba(0,0,0,0.25);";
+    ? `box-shadow:0 0 0 4px ${
+        inside ? "#4ade80" : "#f87171"
+      },0 4px 12px rgba(0,0,0,0.35);`
+    : "box-shadow:0 3px 8px rgba(0,0,0,0.25);";
+
+  const cowSvg = renderToStaticMarkup(
+    <PiCowThin
+      size={isSelected ? 18 : 14}
+      color="white"
+      strokeWidth={1.5}
+    />
+  );
+
   return L.divIcon({
     className: "",
-    html: `<div style="
-      width:${size}px;height:${size}px;border-radius:50%;
-      background:${inside ? "#16a34a" : "#dc2626"};
-      border:2px solid white;
-      display:flex;align-items:center;justify-content:center;
-      font-size:${font}px;${ring}
-      transition:all 0.2s;">🐄</div>`,
+    html: `
+      <div style="
+        width:${size}px;
+        height:${size}px;
+        border-radius:50%;
+        background:${inside ? "#16a34a" : "#dc2626"};
+        border:2px solid white;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        ${ring}
+        transition:all .2s;
+      ">
+        ${cowSvg}
+      </div>
+    `,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });

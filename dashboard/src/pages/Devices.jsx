@@ -9,10 +9,15 @@ import {
 } from "react-icons/fa6";
 
 const Devices = () => {
-  const { deviceData } = useContext(AppContext);
+  const { cows } = useContext(AppContext);
 
   const getLastSeen = (timestamp) => {
-    if (!timestamp) return { text: "-", online: false };
+    if (!timestamp) {
+      return {
+        text: "-",
+        online: false,
+      };
+    }
 
     const diff = Date.now() - timestamp;
 
@@ -35,37 +40,46 @@ const Devices = () => {
     };
   };
 
-  const devices = Object.keys(deviceData).map((id) => {
-    const device = deviceData[id];
-
+  const devices = cows.map((device) => {
     const lastSeen = getLastSeen(device.receivedAt);
 
     return {
-      id,
-      deviceId: id,
-      cow: id,
+      id: device.id,
+
+      deviceId: device.deviceId || device.cowId,
+
+      cow: device.cowId,
+
       battery: device.battery ?? 0,
 
       gps:
-        lastSeen.online &&
-        device.latitude &&
-        device.longitude &&
+        device.status === "Online" &&
+        device.lat &&
+        device.lng &&
         device.satellites > 0,
 
-      lora: lastSeen.online,
+      lora: device.status === "Online",
 
       rssi: device.rssi ?? "-",
+
       snr: device.snr ?? "-",
 
       date: device.date ?? "-",
+
       time: device.time ?? "-",
 
-      lastSeen: lastSeen.text,
+      lastSeen: device.lastSeenText || lastSeen.text,
+
+      isDummy: device.isDummy || false,
+
+      status: device.status,
     };
   });
 
   return (
     <div className="w-full">
+      {/* Header */}
+
       <div className="mb-5">
         <h1 className="text-xl sm:text-2xl font-bold text-green-600">
           Device Management
@@ -100,7 +114,7 @@ const Devices = () => {
         />
       </div>
 
-      {/* Mobile Card View */}
+      {/* Mobile View */}
 
       <div className="md:hidden space-y-3">
         {devices.map((device) => (
@@ -113,7 +127,15 @@ const Devices = () => {
                 <FaMicrochip className="text-green-600" />
 
                 <div>
-                  <p className="font-semibold text-sm">{device.deviceId}</p>
+                  <p className="font-semibold text-sm">
+                    {device.deviceId}
+
+                    {device.isDummy && (
+                      <span className="ml-2 text-xs text-orange-500">
+                        Dummy
+                      </span>
+                    )}
+                  </p>
 
                   <p className="text-xs text-gray-500">Cow: {device.cow}</p>
                 </div>
@@ -174,7 +196,7 @@ const Devices = () => {
         ))}
       </div>
 
-      {/* Desktop Table View */}
+      {/* Desktop Table */}
 
       <div className="hidden md:block bg-white rounded-xl shadow overflow-x-auto">
         <table className="w-full text-sm">
@@ -196,8 +218,17 @@ const Devices = () => {
 
           <tbody>
             {devices.map((device) => (
-              <tr key={device.id} className="border-b border-gray-300 hover:bg-gray-50">
-                <td className="p-3 font-mono">{device.deviceId}</td>
+              <tr
+                key={device.id}
+                className="border-b border-gray-300 hover:bg-gray-50"
+              >
+                <td className="p-3 font-mono">
+                  {device.deviceId}
+
+                  {device.isDummy && (
+                    <span className="ml-2 text-xs text-orange-500">Dummy</span>
+                  )}
+                </td>
 
                 <td className="p-3">{device.cow}</td>
 
@@ -209,9 +240,7 @@ const Devices = () => {
                       ✓ Active
                     </span>
                   ) : (
-                    <span className="text-red-600 font-semibold">
-                      ✗ Offline
-                    </span>
+                    <span className="text-red-600 font-semibold">✗ Lost</span>
                   )}
                 </td>
 

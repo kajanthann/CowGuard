@@ -1,5 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Electrolize&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
 @import "tailwindcss";
 
+
+/* Hide scrollbar */
 ::-webkit-scrollbar {
   display: none;
+}
+
+html {
+  scrollbar-width: none;
+}
+
+
+/* Global font */
+body {
+  font-family: "Roboto", sans-serif;
+}
+
+
+.font-electrolize {
+  font-family: "Electrolize", sans-serif;
 }

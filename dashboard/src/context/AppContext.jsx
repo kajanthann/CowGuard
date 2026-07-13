@@ -4,6 +4,8 @@ import { database } from "../services/firebaseConfig";
 
 export const AppContext = createContext();
 
+const ENABLE_DUMMY_DATA = true;
+
 const INITIAL_BOUNDARY = [
   { lat: 6.853737, lng: 79.905842 },
   { lat: 6.852922, lng: 79.90577 },
@@ -26,7 +28,6 @@ const INITIAL_BOUNDARY = [
 
 export function isInsideBoundary(point, polygon) {
   let inside = false;
-
   let j = polygon.length - 1;
 
   for (let i = 0; i < polygon.length; i++) {
@@ -81,25 +82,100 @@ function getStatus(receivedAt, date, time) {
 
   return {
     status,
-
     lastSeenDate: date || "-",
-
     lastSeenTime: time || "-",
-
     lastSeenText: text,
   };
 }
 
+// Dummy cows for dashboard testing
+
+const DUMMY_COWS=[
+
+{
+id:"COW02",
+cowId:"COW02-dummy",
+name:"Mala",
+breed:"Jersey",
+deviceId:"LORA_002",
+lat:6.852500,
+lng:79.903500,
+battery:85,
+speed:0.4,
+satellites:8,
+rssi:-35,
+snr:10,
+packetID:500,
+status:"Online",
+lastSeenText:"Just now",
+isDummy:true
+},
+
+{
+id:"COW03",
+cowId:"COW03-dummy",
+name:"Nila",
+breed:"Holstein",
+deviceId:"LORA_003",
+lat:6.853000,
+lng:79.904800,
+battery:65,
+speed:0.2,
+satellites:7,
+rssi:-40,
+snr:9,
+packetID:600,
+status:"Online",
+lastSeenText:"1 min ago",
+isDummy:true
+},
+
+{
+id:"COW04",
+cowId:"COW04-dummy",
+name:"Ganga",
+breed:"Brown Swiss",
+deviceId:"LORA_004",
+lat:6.854000,
+lng:79.903900,
+battery:45,
+speed:0,
+satellites:6,
+rssi:-45,
+snr:8,
+packetID:700,
+status:"Online",
+lastSeenText:"3 min ago",
+isDummy:true
+},
+
+// OUTSIDE BOUNDARY COW
+{
+id:"COW05",
+cowId:"COW05-dummy",
+name:"Kamala",
+breed:"Sahiwal",
+deviceId:"LORA_005",
+lat:6.856500,
+lng:79.908500,
+battery:15,
+speed:1.5,
+satellites:5,
+rssi:-60,
+snr:5,
+packetID:800,
+status:"Online",
+lastSeenText:"Just now",
+isDummy:true
+}
+
+];
+
 const AppContextProvider = ({ children }) => {
   const [deviceData, setDeviceData] = useState({});
-
   const [cows, setCows] = useState([]);
-
   const [boundary] = useState(INITIAL_BOUNDARY);
-
   const [refresh, setRefresh] = useState(0);
-
-  // refresh status every minute
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -115,10 +191,12 @@ const AppContextProvider = ({ children }) => {
     const unsubscribe = onValue(cowsRef, (snapshot) => {
       const data = snapshot.val();
 
+      let firebaseCows = [];
+
       if (data) {
         setDeviceData(data);
 
-        const cowArray = Object.keys(data).map((cowId) => {
+        firebaseCows = Object.keys(data).map((cowId) => {
           const cow = data[cowId];
 
           const statusData = getStatus(cow.receivedAt, cow.date, cow.time);
@@ -166,11 +244,17 @@ const AppContextProvider = ({ children }) => {
 
             lastSeenText: statusData.lastSeenText,
 
-            battery: cow.battery || 0,
+            battery: cow.battery || 100,
+
+            isDummy: false,
           };
         });
+      }
 
-        setCows(cowArray);
+      if (ENABLE_DUMMY_DATA) {
+        setCows([...firebaseCows, ...DUMMY_COWS]);
+      } else {
+        setCows(firebaseCows);
       }
     });
 
@@ -185,7 +269,6 @@ const AppContextProvider = ({ children }) => {
         lat: cow.lat,
         lng: cow.lng,
       },
-
       boundary,
     ),
   }));
@@ -208,18 +291,21 @@ const AppContextProvider = ({ children }) => {
         lat: 0,
 
         lng: 0,
+
+        isDummy: true,
       },
     ]);
   };
 
   const deleteCow = (cowId) => {
-    setCows((prev) => prev.filter((c) => c.cowId !== cowId));
+    setCows((prev) => prev.filter((cow) => cow.cowId !== cowId));
   };
 
   return (
     <AppContext.Provider
       value={{
         boundary,
+
         deviceData,
 
         cows,

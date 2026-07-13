@@ -189,7 +189,7 @@ const Alerts = () => {
                 </td>
 
                 <td className="p-3">
-                  <ul className="list-disc ml-5">
+                  <ul className="list-disc ml-5 text-gray-500">
                     {alert.messages.map((m, i) => (
                       <li key={i}>{m}</li>
                     ))}
