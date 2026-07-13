@@ -1,9 +1,6 @@
 # CowGuard - Smart Livestock Monitoring System
 
-<p align="center">
-  <img src="dashboard/img.png" width="45%" />
-  <img src="dashboard/img2.png" width="45%" />
-</p>
+![CowGuard](dashboard/img.png)
 
 CowGuard is a comprehensive IoT solution for real-time monitoring and tracking of livestock (cattle) across farms. It combines GPS tracking, LoRa wireless communication, cloud infrastructure, and intuitive user interfaces to provide farmers with complete visibility over their herds.
 
@@ -35,6 +32,8 @@ CowGuard consists of multiple integrated components working together to deliver 
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+![CowGuard](dashboard/img2.png)
 
 ## 🏗️ Project Structure
 
