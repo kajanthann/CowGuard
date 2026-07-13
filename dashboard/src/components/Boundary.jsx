@@ -13,9 +13,10 @@ import { AppContext } from "../context/AppContext.jsx";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl:       "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl:     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -23,12 +24,12 @@ function cornerIcon(index) {
   return L.divIcon({
     className: "",
     html: `<div style="
-      width:20px;height:20px;border-radius:50%;
-      background:#16a34a;border:2px solid white;color:white;
+      width:15px;height:15px;border-radius:50%;
+      background:#16a34a;border:1px solid white;color:white;
       display:flex;align-items:center;justify-content:center;
-      font-size:9px;font-weight:bold;
+      font-size:9px;
       box-shadow:0 2px 6px rgba(0,0,0,.35);">${index + 1}</div>`,
-    iconSize:   [20, 20],
+    iconSize: [20, 20],
     iconAnchor: [10, 10],
   });
 }
@@ -48,7 +49,7 @@ function cowIcon(inside, isSelected) {
       display:flex;align-items:center;justify-content:center;
       font-size:${font}px;${ring}
       transition:all 0.2s;">🐄</div>`,
-    iconSize:   [size, size],
+    iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });
 }
@@ -56,26 +57,54 @@ function cowIcon(inside, isSelected) {
 // ── Map controller ────────────────────────────────────────────────────────────
 function MapViewController({ mode, bounds }) {
   const map = useMap();
+
   useEffect(() => {
     if (mode === "bounded") {
-      map.fitBounds(bounds, { padding: [25, 25] });
-      map.setMaxBounds(bounds.pad(0.03));
-      map.dragging.disable();
+      map.fitBounds(bounds, {
+        padding: [40, 40],
+      });
+
+      map.setMaxBounds(bounds.pad(0.15));
+
+      // Disable zoom
       map.scrollWheelZoom.disable();
       map.doubleClickZoom.disable();
       map.touchZoom.disable();
       map.boxZoom.disable();
       map.keyboard.disable();
-    } else {
-      map.setMaxBounds(null);
+
+      // Disable zoom control buttons
+      if (map.zoomControl) {
+        map.zoomControl.remove();
+      }
+
+      // Allow dragging
       map.dragging.enable();
+    } else {
+      // Full view
+
+      map.setMaxBounds(null);
+
+      // Enable zoom
       map.scrollWheelZoom.enable();
       map.doubleClickZoom.enable();
       map.touchZoom.enable();
       map.boxZoom.enable();
       map.keyboard.enable();
+
+      // Add zoom buttons back
+      if (!map.zoomControl) {
+        L.control
+          .zoom({
+            position: "topright",
+          })
+          .addTo(map);
+      }
+
+      map.dragging.enable();
     }
   }, [map, bounds, mode]);
+
   return null;
 }
 
@@ -83,25 +112,25 @@ function MapViewController({ mode, bounds }) {
 const Boundary = () => {
   const { boundary, enrichedCows } = useContext(AppContext);
 
-  const [mode, setMode]             = useState("bounded");
+  const [mode, setMode] = useState("bounded");
   const [selectedCow, setSelectedCow] = useState(null);
 
   const polygonPositions = boundary.map((p) => [p.lat, p.lng]);
-  const bounds           = L.latLngBounds(polygonPositions);
-  const center           = bounds.getCenter();
+  const allMapPoints = [
+    ...polygonPositions,
+    ...enrichedCows.map((cow) => [cow.lat, cow.lng]),
+  ];
+  const bounds = L.latLngBounds(allMapPoints);
+  const center = bounds.getCenter();
 
-  const insideCount  = enrichedCows.filter((c) => c.inside).length;
+  const insideCount = enrichedCows.filter((c) => c.inside).length;
   const outsideCount = enrichedCows.filter((c) => !c.inside).length;
 
   return (
     <div className="flex h-screen bg-gray-50 text-gray-800 font-sans overflow-hidden">
-
       {/* ── Map area ── */}
       <div className="flex-1 flex flex-col">
         <div className="relative flex-1">
-
-         
-
           {/* View toggle */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] flex bg-white/90 backdrop-blur border border-gray-200 rounded-full p-1 shadow-md">
             <button
@@ -128,14 +157,21 @@ const Boundary = () => {
 
           {/* Alert banner */}
           {outsideCount > 0 && (
-            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[1000]
-              bg-red-500 text-white text-xs font-semibold px-5 py-2 rounded-full shadow-lg animate-bounce pointer-events-none">
-              {outsideCount} cow{outsideCount > 1 ? "s" : ""} outside the boundary!
+            <div
+              className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[1000]
+              bg-red-500 text-white text-xs font-semibold px-5 py-2 rounded-full shadow-lg animate-bounce pointer-events-none"
+            >
+              {outsideCount} cow{outsideCount > 1 ? "s" : ""} outside the
+              boundary!
             </div>
           )}
 
-
-          <MapContainer center={center} zoom={17} className="w-full h-full">
+          <MapContainer
+            center={center}
+            zoom={17}
+            zoomControl={false}
+            className="w-full h-full"
+          >
             <TileLayer
               attribution="© OpenStreetMap"
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -149,7 +185,7 @@ const Boundary = () => {
                 color: "#16a34a",
                 fillColor: "#22c55e",
                 fillOpacity: 0.15,
-                weight: 3,
+                weight: 2,
               }}
             />
 
@@ -161,7 +197,8 @@ const Boundary = () => {
                 icon={cornerIcon(index)}
               >
                 <Popup>
-                  <strong>Point {index + 1}</strong><br />
+                  <strong>Point {index + 1}</strong>
+                  <br />
                   {point.lat.toFixed(6)}, {point.lng.toFixed(6)}
                 </Popup>
               </Marker>
@@ -177,11 +214,32 @@ const Boundary = () => {
               >
                 <Popup>
                   <div style={{ minWidth: 140 }}>
-                    <strong>{cow.name} ({cow.id})</strong><br />
-                    Status:{" "}
-                    <span style={{ color: cow.inside ? "green" : "red", fontWeight: 600 }}>
-                      {cow.inside ? "Inside" : "OUTSIDE"}
-                    </span><br />
+                    <strong>
+                      {cow.name} ({cow.id})
+                    </strong>
+                    <br />
+                    Status:
+                    <span
+                      style={{
+                        color: cow.inside ? "green" : "red",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {cow.inside ? "Inside Boundary" : "OUTSIDE Boundary"}
+                    </span>
+                    <br />
+                    Device:
+                    <span
+                      style={{
+                        color: cow.status === "Online" ? "green" : "red",
+                      }}
+                    >
+                      {cow.status}
+                    </span>
+                    <br />
+                    Last Seen:
+                    {cow.lastSeenDate} {cow.lastSeenTime}
+                    <br />
                     Battery: {cow.battery}%<br />
                     {cow.lat.toFixed(5)}, {cow.lng.toFixed(5)}
                   </div>
@@ -196,18 +254,28 @@ const Boundary = () => {
           {enrichedCows.map((cow) => (
             <button
               key={cow.id}
-              onClick={() => setSelectedCow(selectedCow?.id === cow.id ? null : cow)}
+              onClick={() =>
+                setSelectedCow(selectedCow?.id === cow.id ? null : cow)
+              }
               className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all
-                ${selectedCow?.id === cow.id
-                  ? "border-emerald-400 bg-emerald-50 shadow-sm"
-                  : cow.inside
-                    ? "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
-                    : "border-red-300 bg-red-50 animate-pulse"}`}
+                ${
+                  selectedCow?.id === cow.id
+                    ? "border-emerald-400 bg-emerald-50 shadow-sm"
+                    : cow.inside
+                      ? "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                      : "border-red-300 bg-red-50 animate-pulse"
+                }`}
             >
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cow.inside ? "bg-emerald-500" : "bg-red-500"}`} />
+              <span
+                className={`w-2 h-2 rounded-full flex-shrink-0 ${cow.inside ? "bg-emerald-500" : "bg-red-500"}`}
+              />
               <div>
-                <p className="text-xs font-semibold text-gray-800">{cow.name}</p>
-                <p className={`text-xs ${cow.inside ? "text-emerald-500" : "text-red-500"}`}>
+                <p className="text-xs font-semibold text-gray-800">
+                  {cow.name}
+                </p>
+                <p
+                  className={`text-xs ${cow.inside ? "text-emerald-500" : "text-red-500"}`}
+                >
                   {cow.inside ? "Safe" : "Outside!"}
                 </p>
               </div>
@@ -218,12 +286,13 @@ const Boundary = () => {
                     style={{ width: `${cow.battery}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-400 text-right mt-0.5">{cow.battery}%</p>
+                <p className="text-xs text-gray-400 text-right mt-0.5">
+                  {cow.battery}%
+                </p>
               </div>
             </button>
           ))}
         </div>
-
       </div>
     </div>
   );

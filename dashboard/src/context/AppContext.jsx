@@ -1,72 +1,215 @@
-import React, { useState, createContext } from "react";
+import React, { useState, createContext, useEffect } from "react";
+import { ref, onValue } from "firebase/database";
+import { database } from "../services/firebaseConfig";
 
-// named export — must match what Boundary.jsx imports
 export const AppContext = createContext();
 
 const INITIAL_BOUNDARY = [
   { lat: 6.853737, lng: 79.905842 },
-  { lat: 6.852922, lng: 79.905770 },
+  { lat: 6.852922, lng: 79.90577 },
   { lat: 6.851838, lng: 79.905475 },
   { lat: 6.851726, lng: 79.904571 },
   { lat: 6.851275, lng: 79.904172 },
   { lat: 6.851579, lng: 79.902837 },
   { lat: 6.851493, lng: 79.901925 },
-  { lat: 6.852037, lng: 79.901640 },
-  { lat: 6.851706, lng: 79.900750 },
+  { lat: 6.852037, lng: 79.90164 },
+  { lat: 6.851706, lng: 79.90075 },
   { lat: 6.851882, lng: 79.899242 },
-  { lat: 6.852811, lng: 79.899720 },
+  { lat: 6.852811, lng: 79.89972 },
   { lat: 6.852645, lng: 79.901454 },
   { lat: 6.852713, lng: 79.903075 },
   { lat: 6.855174, lng: 79.903442 },
   { lat: 6.855224, lng: 79.903987 },
   { lat: 6.855348, lng: 79.904339 },
-  { lat: 6.855046, lng: 79.906410 },
+  { lat: 6.855046, lng: 79.90641 },
 ];
 
-const INITIAL_COWS = [
-  { id: "COW_01", cowId: "COW_01", name: "Mala",    breed: "Jersey",   deviceId: "24:6F:28:AB:CD:EF", loraId: "NODE_01", lat: 6.8534, lng: 79.9048, battery: 85, status: "active"    },
-  { id: "COW_02", cowId: "COW_02", name: "Nila",    breed: "Holstein", deviceId: "AA:BB:CC:DD:EE:FF", loraId: "NODE_02", lat: 6.8528, lng: 79.9035, battery: 72, status: "active"    },
-  { id: "COW_03", cowId: "COW_03", name: "Ganga",   breed: "Sahiwal",  deviceId: "11:22:33:44:55:66", loraId: "NODE_03", lat: 6.851157, lng: 79.9045, battery: 91, status: "active"    },
-  { id: "COW_04", cowId: "COW_04", name: "Kamala",  breed: "Local",    deviceId: "AA:11:BB:22:CC:33", loraId: "NODE_04", lat: 6.8518, lng: 79.9030, battery: 38, status: "5 min ago" },
-  { id: "COW_05", cowId: "COW_05", name: "Sundari", breed: "Friesian", deviceId: "FF:EE:DD:CC:BB:AA", loraId: "NODE_05", lat: 6.8525, lng: 79.9055, battery: 60, status: "2 min ago" },
-];
-
-function isInsideBoundary(point, polygon) {
+export function isInsideBoundary(point, polygon) {
   let inside = false;
-  const n = polygon.length;
-  let j = n - 1;
-  for (let i = 0; i < n; i++) {
-    const xi = polygon[i].lng, yi = polygon[i].lat;
-    const xj = polygon[j].lng, yj = polygon[j].lat;
+
+  let j = polygon.length - 1;
+
+  for (let i = 0; i < polygon.length; i++) {
+    const xi = polygon[i].lng;
+    const yi = polygon[i].lat;
+
+    const xj = polygon[j].lng;
+    const yj = polygon[j].lat;
+
     if (
-      (yi > point.lat) !== (yj > point.lat) &&
+      yi > point.lat !== yj > point.lat &&
       point.lng < ((xj - xi) * (point.lat - yi)) / (yj - yi) + xi
-    ) inside = !inside;
+    ) {
+      inside = !inside;
+    }
+
     j = i;
   }
+
   return inside;
 }
 
-// default export — wrap your app with this in main.jsx
-const AppContextProvider = ({ children }) => {
-  const [cows, setCows]   = useState(INITIAL_COWS);
-  const [boundary]        = useState(INITIAL_BOUNDARY);
+function getStatus(receivedAt, date, time) {
+  if (!receivedAt) {
+    return {
+      status: "Offline",
+      lastSeenDate: date || "-",
+      lastSeenTime: time || "-",
+      lastSeenText: "No Data",
+    };
+  }
 
-  const enrichedCows = cows.map((c) => ({
-    ...c,
-    inside: isInsideBoundary({ lat: c.lat, lng: c.lng }, boundary),
+  const diff = Date.now() - receivedAt;
+
+  const minutes = Math.floor(diff / 60000);
+
+  let status = "Online";
+
+  if (diff > 180000) {
+    status = "Offline";
+  }
+
+  let text = "Just now";
+
+  if (minutes > 0 && minutes < 60) {
+    text = `${minutes} min ago`;
+  }
+
+  if (minutes >= 60) {
+    text = `${Math.floor(minutes / 60)} hour ago`;
+  }
+
+  return {
+    status,
+
+    lastSeenDate: date || "-",
+
+    lastSeenTime: time || "-",
+
+    lastSeenText: text,
+  };
+}
+
+const AppContextProvider = ({ children }) => {
+  const [deviceData, setDeviceData] = useState({});
+
+  const [cows, setCows] = useState([]);
+
+  const [boundary] = useState(INITIAL_BOUNDARY);
+
+  const [refresh, setRefresh] = useState(0);
+
+  // refresh status every minute
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setRefresh((prev) => prev + 1);
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const cowsRef = ref(database, "cows");
+
+    const unsubscribe = onValue(cowsRef, (snapshot) => {
+      const data = snapshot.val();
+
+      if (data) {
+        setDeviceData(data);
+
+        const cowArray = Object.keys(data).map((cowId) => {
+          const cow = data[cowId];
+
+          const statusData = getStatus(cow.receivedAt, cow.date, cow.time);
+
+          return {
+            id: cowId,
+
+            cowId,
+
+            name: cow.name || cowId,
+
+            breed: cow.breed || "-",
+
+            deviceId: cow.deviceId || cowId,
+
+            lat: cow.latitude || 0,
+
+            lng: cow.longitude || 0,
+
+            altitude: cow.altitude || 0,
+
+            speed: cow.speed || 0,
+
+            satellites: cow.satellites || 0,
+
+            hdop: cow.hdop || 0,
+
+            packetID: cow.packetID || 0,
+
+            rssi: cow.rssi || "-",
+
+            snr: cow.snr || "-",
+
+            date: cow.date,
+
+            time: cow.time,
+
+            receivedAt: cow.receivedAt,
+
+            status: statusData.status,
+
+            lastSeenDate: statusData.lastSeenDate,
+
+            lastSeenTime: statusData.lastSeenTime,
+
+            lastSeenText: statusData.lastSeenText,
+
+            battery: cow.battery || 0,
+          };
+        });
+
+        setCows(cowArray);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [refresh]);
+
+  const enrichedCows = cows.map((cow) => ({
+    ...cow,
+
+    inside: isInsideBoundary(
+      {
+        lat: cow.lat,
+        lng: cow.lng,
+      },
+
+      boundary,
+    ),
   }));
 
   const addCow = (formData) => {
-    setCows((prev) => [...prev, {
-      ...formData,
-      id:      formData.cowId,
-      battery: 100,
-      status:  "active",
-      loraId:  "NODE_NEW",
-      lat:     6.8528,
-      lng:     79.9035,
-    }]);
+    setCows((prev) => [
+      ...prev,
+
+      {
+        ...formData,
+
+        cowId: formData.cowId,
+
+        name: formData.name,
+
+        battery: 100,
+
+        status: "Online",
+
+        lat: 0,
+
+        lng: 0,
+      },
+    ]);
   };
 
   const deleteCow = (cowId) => {
@@ -74,14 +217,22 @@ const AppContextProvider = ({ children }) => {
   };
 
   return (
-    <AppContext.Provider value={{
-      boundary,
-      cows,
-      enrichedCows,
-      addCow,
-      deleteCow,
-      isInsideBoundary,
-    }}>
+    <AppContext.Provider
+      value={{
+        boundary,
+        deviceData,
+
+        cows,
+
+        enrichedCows,
+
+        addCow,
+
+        deleteCow,
+
+        isInsideBoundary,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );

@@ -57,7 +57,7 @@ const Cows = () => {
           </thead>
           <tbody>
             {enrichedCows.map((cow) => (
-              <tr key={cow.cowId} className="border-b hover:bg-gray-50">
+              <tr key={cow.cowId} className="border-b border-gray-200 hover:bg-gray-50">
  
                 <td className="p-3 font-mono">{cow.cowId}</td>
                 <td className="p-3">{cow.name}</td>
@@ -68,12 +68,11 @@ const Cows = () => {
  
                 <td className="p-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs">{cow.inside ? "🟢" : "🔴"}</span>
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-semibold ${
                         cow.inside
                           ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
+                          : "bg-red-50 text-red-700 border border-red-200"
                       }`}
                     >
                       {cow.inside ? "In" : "Out"}
@@ -81,7 +80,15 @@ const Cows = () => {
                   </div>
                 </td>
  
-                <td className="p-3">{cow.status}</td>
+                <td className="p-3">{cow.status}
+                  {cow.status === "Offline" ? (
+                      <p className="text-xs text-gray-500">
+                      {cow.lastSeenText}
+                      </p>
+                  ) : (
+                    ""
+                  )}
+                </td>
  
                 <td className="p-3">
                   <button

@@ -21,8 +21,8 @@ L.Icon.Default.mergeOptions({
  
 // ── Icon helpers ───────────────────────────────────────────────────────────────
 function cowIcon(inside, isSelected) {
-  const size = isSelected ? 40 : 28;
-  const font = isSelected ? 20 : 14;
+  const size = isSelected ? 25 : 20;
+  const font = isSelected ? 15 : 10;
   const bg   = inside ? "#16a34a" : "#dc2626";
   const ring = isSelected
     ? `box-shadow:0 0 0 3px ${inside ? "#4ade80" : "#f87171"},0 4px 12px rgba(0,0,0,.3);`
@@ -71,29 +71,49 @@ function cornerIcon(index) {
  
 // ── Map controller ─────────────────────────────────────────────────────────────
 function MapViewController({ bounds, interactive }) {
+
   const map = useMap();
+
   useEffect(() => {
+
     if (!bounds) return;
-    map.fitBounds(bounds, { padding: [25, 25] });
- 
-    if (!interactive) {
-      map.setMaxBounds(bounds.pad(0.03));
-      map.dragging.disable();
-      map.scrollWheelZoom.disable();
-      map.doubleClickZoom.disable();
-      map.touchZoom.disable();
-      map.boxZoom.disable();
-      map.keyboard.disable();
-    } else {
+
+
+    map.fitBounds(bounds,{
+      padding:[40,40]
+    });
+
+
+    if(interactive){
+
       map.setMaxBounds(null);
+
       map.dragging.enable();
       map.scrollWheelZoom.enable();
       map.doubleClickZoom.enable();
       map.touchZoom.enable();
       map.boxZoom.enable();
       map.keyboard.enable();
+
+
+    }else{
+
+      map.setMaxBounds(bounds.pad(0.05));
+
+
+      map.dragging.disable();
+      map.scrollWheelZoom.disable();
+      map.doubleClickZoom.disable();
+      map.touchZoom.disable();
+      map.boxZoom.disable();
+      map.keyboard.disable();
+
     }
-  }, [map, bounds, interactive]);
+
+
+  },[map,bounds,interactive]);
+
+
   return null;
 }
  
@@ -125,9 +145,34 @@ const FarmMap = ({
   style = {},
 }) => {
   const { boundary, enrichedCows } = useContext(AppContext);
- 
   const polygonPositions = boundary.map((p) => [p.lat, p.lng]);
-  const bounds = L.latLngBounds(polygonPositions);
+  let mapPoints = [...polygonPositions];
+
+  if (mode === "all") {
+    mapPoints.push(
+      ...enrichedCows.map((c) => [
+        c.lat,
+        c.lng,
+      ])
+    );
+  }
+
+  if (mode === "single" && cow) {
+    mapPoints.push([
+      cow.lat,
+      cow.lng,
+    ]);
+  }
+
+  if (mode === "alert" && alertData) {
+    mapPoints.push([
+      alertData.lat,
+      alertData.lng,
+    ]);
+  }
+
+  const bounds = L.latLngBounds(mapPoints);
+
   const center = bounds.getCenter();
  
   // derive initial center / zoom
@@ -141,11 +186,14 @@ const FarmMap = ({
   return (
     <div className={`w-full h-full ${className}`} style={style}>
       <MapContainer
-        center={initCenter}
-        zoom={17}
-        className="w-full h-full"
-        zoomControl={interactive}
-      >
+center={initCenter}
+zoom={17}
+className="w-full h-full"
+zoomControl={interactive}
+scrollWheelZoom={interactive}
+doubleClickZoom={interactive}
+touchZoom={interactive}
+>
         <TileLayer
           attribution="© OpenStreetMap"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

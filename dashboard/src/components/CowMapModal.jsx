@@ -20,9 +20,6 @@ const CowMapModal = ({ cow, onClose }) => {
             <h2 className="font-semibold text-gray-800">
               {cow.name} · {cow.cowId}
             </h2>
-            <p className="text-xs text-gray-500">
-              {cow.breed} · {cow.loraId}
-            </p>
           </div>
           <button
             onClick={onClose}

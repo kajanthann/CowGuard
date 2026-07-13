@@ -89,9 +89,59 @@ const Sidebar = () => {
           </span>
         </p>
       </div>
+
+      {/* ─── Cow List ─────────────────────────── */}
+      <div className="p-4 flex-1 overflow-y-auto">
+        <p className="text-xs text-gray-700 uppercase mb-2">
+          All Cows
+        </p>
+ 
+        <div className="space-y-2">
+          {enrichedCows.map((cow) => (
+            <div
+              key={cow.cowId}
+              className="flex items-center gap-2 bg-gray-50/75 border border-gray-200 rounded-lg px-3 py-2"
+            >
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  cow.inside ? "bg-green-500" : "bg-red-500"
+                }`}
+              />
+ 
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-gray-800">
+                  {cow.name || cow.cowId}
+                </p>
+                <p className="text-xs font-mono text-gray-400">
+                  {cow.cowId}
+                </p>
+                <p
+                  className={`text-xs ${
+                    cow.inside
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {cow.inside ? "Inside" : "Outside"}
+                </p>
+              </div>
+ 
+              <span
+                className={`text-xs font-mono ${
+                  cow.battery <= LOW_BATTERY_THRESHOLD
+                    ? "text-yellow-600"
+                    : "text-gray-600"
+                }`}
+              >
+                {cow.battery}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
  
       {/* ─── Livestock Summary ───────────────── */}
-      <div className="p-4 border-gray-200">
+      <div className="p-4 border-t border-gray-200">
         <p className="text-xs text-gray-500 uppercase mb-2">
           Livestock
         </p>
@@ -149,6 +199,8 @@ const Sidebar = () => {
           </div>
         </div>
       </div>
+
+
  
       {/* ─── Battery Alert ────────────────────── */}
       <div className="p-4 border-b border-gray-200">
@@ -189,56 +241,6 @@ const Sidebar = () => {
               </div>
             )}
           </div>
-        </div>
-      </div>
- 
-      {/* ─── Cow List ─────────────────────────── */}
-      <div className="p-4 flex-1 overflow-y-auto">
-        <p className="text-xs text-gray-500 uppercase mb-2">
-          All Cows
-        </p>
- 
-        <div className="space-y-2">
-          {enrichedCows.map((cow) => (
-            <div
-              key={cow.cowId}
-              className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2"
-            >
-              <span
-                className={`w-2.5 h-2.5 rounded-full ${
-                  cow.inside ? "bg-green-500" : "bg-red-500"
-                }`}
-              />
- 
-              <div className="flex-1">
-                <p className="text-xs font-semibold text-gray-800">
-                  {cow.name || cow.cowId}
-                </p>
-                <p className="text-xs font-mono text-gray-400">
-                  {cow.cowId}
-                </p>
-                <p
-                  className={`text-xs ${
-                    cow.inside
-                      ? "text-green-600"
-                      : "text-red-600"
-                  }`}
-                >
-                  {cow.inside ? "Inside" : "Outside"}
-                </p>
-              </div>
- 
-              <span
-                className={`text-xs font-mono ${
-                  cow.battery <= LOW_BATTERY_THRESHOLD
-                    ? "text-yellow-600"
-                    : "text-gray-600"
-                }`}
-              >
-                {cow.battery}%
-              </span>
-            </div>
-          ))}
         </div>
       </div>
     </div>

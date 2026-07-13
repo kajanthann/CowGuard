@@ -6,7 +6,7 @@ const LiveMap = () => {
     <div className="flex flex-col h-[calc(100vh-120px)]">
 
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-green-500">
+        <h1 className="text-2xl font-bold text-green-600">
           Live Map
         </h1>
       </div>
