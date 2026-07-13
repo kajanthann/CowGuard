@@ -1,5 +1,12 @@
 import React, { useContext } from "react";
 import { AppContext } from "../context/AppContext";
+import {
+  FaWifi,
+  FaLocationDot,
+  FaBatteryHalf,
+  FaMicrochip,
+  FaSignal,
+} from "react-icons/fa6";
 
 const Devices = () => {
   const { deviceData } = useContext(AppContext);
@@ -7,8 +14,7 @@ const Devices = () => {
   const getLastSeen = (timestamp) => {
     if (!timestamp) return { text: "-", online: false };
 
-    const now = Date.now();
-    const diff = now - timestamp;
+    const diff = Date.now() - timestamp;
 
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);
@@ -20,8 +26,7 @@ const Devices = () => {
     } else if (minutes < 60) {
       text = `${minutes} min ago`;
     } else {
-      const hours = Math.floor(minutes / 60);
-      text = `${hours} hour ago`;
+      text = `${Math.floor(minutes / 60)} hour ago`;
     }
 
     return {
@@ -52,8 +57,6 @@ const Devices = () => {
       rssi: device.rssi ?? "-",
       snr: device.snr ?? "-",
 
-      receivedAt: device.receivedAt,
-
       date: device.date ?? "-",
       time: device.time ?? "-",
 
@@ -62,18 +65,21 @@ const Devices = () => {
   });
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-green-600">
+    <div className="w-full">
+      <div className="mb-5">
+        <h1 className="text-xl sm:text-2xl font-bold text-green-600">
           Device Management
         </h1>
+
         <p className="text-gray-500 text-sm">
           Manage LoRa GPS tracking devices
         </p>
       </div>
 
-      <div className="grid grid-cols-5 gap-4 mb-6">
-        <Card title="Total Devices" value={devices.length} />
+      {/* Summary Cards */}
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        <Card title="Total" value={devices.length} />
 
         <Card
           title="Online"
@@ -88,91 +94,153 @@ const Devices = () => {
         />
 
         <Card
-          title="GPS Lost"
-          value={devices.filter((d) => !d.gps).length}
-          color="text-orange-500"
-        />
-
-        <Card
           title="Low Battery"
           value={devices.filter((d) => d.battery < 20).length}
           color="text-yellow-500"
         />
       </div>
 
-      <div className="bg-white rounded-xl shadow overflow-x-auto">
+      {/* Mobile Card View */}
+
+      <div className="md:hidden space-y-3">
+        {devices.map((device) => (
+          <div
+            key={device.id}
+            className="bg-white rounded-xl shadow border border-gray-200 p-4"
+          >
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center gap-2">
+                <FaMicrochip className="text-green-600" />
+
+                <div>
+                  <p className="font-semibold text-sm">{device.deviceId}</p>
+
+                  <p className="text-xs text-gray-500">Cow: {device.cow}</p>
+                </div>
+              </div>
+
+              <span
+                className={`text-xs px-2 py-1 rounded-full ${
+                  device.lora
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {device.lora ? "Online" : "Offline"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="flex items-center gap-2">
+                <FaBatteryHalf className="text-yellow-500" />
+
+                <span>{device.battery}%</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <FaLocationDot
+                  className={device.gps ? "text-green-600" : "text-red-600"}
+                />
+
+                <span>{device.gps ? "GPS Active" : "GPS Lost"}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <FaWifi
+                  className={device.lora ? "text-green-600" : "text-red-600"}
+                />
+
+                <span>LoRa</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <FaSignal className="text-gray-500" />
+
+                <span>{device.rssi} dBm</span>
+              </div>
+            </div>
+
+            <div className="mt-3 pt-3 border-t text-xs text-gray-500">
+              <p>
+                Last Seen:
+                <span className="font-medium ml-1">
+                  {device.date} {device.time}
+                </span>
+              </p>
+
+              <p>{device.lastSeen}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+
+      <div className="hidden md:block bg-white rounded-xl shadow overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-100">
             <tr>
               <th className="p-3 text-left">Device ID</th>
+
               <th className="p-3 text-left">Cow</th>
+
               <th className="p-3 text-center">Battery</th>
+
               <th className="p-3 text-center">GPS</th>
+
               <th className="p-3 text-center">LoRa</th>
+
               <th className="p-3 text-center">Last Seen</th>
             </tr>
           </thead>
 
           <tbody>
             {devices.map((device) => (
-              <tr key={device.id} className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="p-3 font-mono">
-                  {device.deviceId}
-                </td>
+              <tr key={device.id} className="border-b border-gray-300 hover:bg-gray-50">
+                <td className="p-3 font-mono">{device.deviceId}</td>
 
-                <td className="p-3">
-                  {device.cow}
-                </td>
+                <td className="p-3">{device.cow}</td>
+
+                <td className="p-3 text-center">{device.battery}%</td>
 
                 <td className="p-3 text-center">
-                  {device.battery}%
-                </td>
-
-                <td className="text-center">
                   {device.gps ? (
                     <span className="text-green-600 font-semibold">
                       ✓ Active
                     </span>
                   ) : (
-                    <span className="font-semibold text-gray-600">
-                       <span className="text-red-600 font-semibold">✗</span> Offline
+                    <span className="text-red-600 font-semibold">
+                      ✗ Offline
                     </span>
                   )}
                 </td>
 
-                <td className="text-center">
+                <td className="p-3 text-center">
                   {device.lora ? (
                     <div>
-                      <span className="text-green-600 font-semibold block">
-                        ✓ Online
-                      </span>
+                      <p className="text-green-600 font-semibold">✓ Online</p>
 
-                      <span className="text-xs text-gray-500">
-                        RSSI: {device.rssi} dBm
-                      </span>
+                      <p className="text-xs text-gray-500">
+                        RSSI {device.rssi} dBm
+                      </p>
 
-                      <br />
-
-                      <span className="text-xs text-gray-500">
-                        SNR: {device.snr} dB
-                      </span>
+                      <p className="text-xs text-gray-500">
+                        SNR {device.snr} dB
+                      </p>
                     </div>
                   ) : (
-                    <span className="font-semibold text-gray-600">
-                       <span className="text-red-600 font-semibold">✗</span> Offline
+                    <span className="text-red-600 font-semibold">
+                      ✗ Offline
                     </span>
                   )}
                 </td>
 
-                <td className="text-center">
-                  <div>
-                    <div className="flex justify-center items-center gap-2">
-                      <p>{device.date}</p>|<p> {device.time}</p>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      {device.lastSeen}
-                    </p>
-                  </div>
+                <td className="p-3 text-center">
+                  <p>
+                    {device.date} | {device.time}
+                  </p>
+
+                  <p className="text-xs text-gray-500">{device.lastSeen}</p>
                 </td>
               </tr>
             ))}
@@ -185,13 +253,10 @@ const Devices = () => {
 
 function Card({ title, value, color = "" }) {
   return (
-    <div className="bg-white rounded-xl shadow p-4">
-      <p className="text-gray-500 text-sm">
-        {title}
-      </p>
-      <h2 className={`text-3xl font-bold mt-2 ${color}`}>
-        {value}
-      </h2>
+    <div className="bg-white rounded-xl shadow p-3 sm:p-4">
+      <p className="text-gray-500 text-xs sm:text-sm">{title}</p>
+
+      <h2 className={`text-2xl font-bold mt-2 ${color}`}>{value}</h2>
     </div>
   );
 }

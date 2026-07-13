@@ -59,50 +59,68 @@ function MapViewController({ mode, bounds }) {
   const map = useMap();
 
   useEffect(() => {
-    if (mode === "bounded") {
-      map.fitBounds(bounds, {
-        padding: [40, 40],
-      });
+    const applyMode = () => {
+      // Force Leaflet to re-measure the container before fitting bounds.
+      // Without this, mobile layouts (where height depends on responsive
+      // Tailwind classes) can be measured before CSS has finished settling.
+      map.invalidateSize();
 
-      map.setMaxBounds(bounds.pad(0.15));
+      if (mode === "bounded") {
+        map.fitBounds(bounds, {
+          padding: [30, 30],
+        });
 
-      // Disable zoom
-      map.scrollWheelZoom.disable();
-      map.doubleClickZoom.disable();
-      map.touchZoom.disable();
-      map.boxZoom.disable();
-      map.keyboard.disable();
+        map.setMaxBounds(bounds.pad(0.15));
 
-      // Disable zoom control buttons
-      if (map.zoomControl) {
-        map.zoomControl.remove();
+        // Disable zoom
+        map.scrollWheelZoom.disable();
+        map.doubleClickZoom.disable();
+        map.touchZoom.disable();
+        map.boxZoom.disable();
+        map.keyboard.disable();
+
+        // Disable zoom control buttons
+        if (map.zoomControl) {
+          map.zoomControl.remove();
+        }
+
+        // Allow dragging
+        map.dragging.enable();
+      } else {
+        // Full view
+        map.setMaxBounds(null);
+
+        // Enable zoom
+        map.scrollWheelZoom.enable();
+        map.doubleClickZoom.enable();
+        map.touchZoom.enable();
+        map.boxZoom.enable();
+        map.keyboard.enable();
+
+        // Add zoom buttons back
+        if (!map.zoomControl) {
+          L.control
+            .zoom({
+              position: "topright",
+            })
+            .addTo(map);
+        }
+
+        map.dragging.enable();
       }
+    };
 
-      // Allow dragging
-      map.dragging.enable();
-    } else {
-      // Full view
+    // Small delay lets the flex/tailwind layout settle before Leaflet
+    // measures the container (fixes mobile fitBounds being wrong on mount)
+    const timer = setTimeout(applyMode, 150);
 
-      map.setMaxBounds(null);
+    // Re-fit whenever the viewport changes size (mobile rotation, resizing)
+    window.addEventListener("resize", applyMode);
 
-      // Enable zoom
-      map.scrollWheelZoom.enable();
-      map.doubleClickZoom.enable();
-      map.touchZoom.enable();
-      map.boxZoom.enable();
-      map.keyboard.enable();
-
-      // Add zoom buttons back
-      if (!map.zoomControl) {
-        L.control
-          .zoom({
-            position: "topright",
-          })
-          .addTo(map);
-      }
-
-      map.dragging.enable();
-    }
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", applyMode);
+    };
   }, [map, bounds, mode]);
 
   return null;
@@ -127,42 +145,44 @@ const Boundary = () => {
   const outsideCount = enrichedCows.filter((c) => !c.inside).length;
 
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-800 font-sans overflow-hidden">
+    // FIX: was `h-screen`, which ignores whatever height the parent gives it
+    // (e.g. 30vh on mobile from LiveMap.jsx). `h-full` makes it respect the
+    // parent container's actual height on every breakpoint.
+    <div className="flex h-full bg-gray-50 text-gray-800 font-sans overflow-hidden">
       {/* ── Map area ── */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col h-full">
         <div className="relative flex-1">
           {/* View toggle */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] flex bg-white/90 backdrop-blur border border-gray-200 rounded-full p-1 shadow-md">
+          <div className="absolute top-3 sm:top-4 left-1/2 -translate-x-1/2 z-[1000] flex bg-white/90 backdrop-blur border border-gray-200 rounded-full p-1 shadow-md w-[90%] max-w-fit justify-center">
             <button
               onClick={() => setMode("bounded")}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+              className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition flex-1 whitespace-nowrap ${
                 mode === "bounded"
                   ? "bg-emerald-500 text-white shadow"
                   : "text-gray-500 hover:text-gray-800"
               }`}
             >
-              Bounded View
+              <span className="hidden sm:inline">Bounded View</span>
+              <span className="sm:hidden">Bounded</span>
             </button>
+
             <button
               onClick={() => setMode("full")}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+              className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition flex-1 whitespace-nowrap ${
                 mode === "full"
                   ? "bg-emerald-500 text-white shadow"
                   : "text-gray-500 hover:text-gray-800"
               }`}
             >
-              Full View
+              <span className="hidden sm:inline">Full View</span>
+              <span className="sm:hidden">Full</span>
             </button>
           </div>
 
           {/* Alert banner */}
           {outsideCount > 0 && (
-            <div
-              className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[1000]
-              bg-red-500 text-white text-xs font-semibold px-5 py-2 rounded-full shadow-lg animate-bounce pointer-events-none"
-            >
-              {outsideCount} cow{outsideCount > 1 ? "s" : ""} outside the
-              boundary!
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] bg-red-500 text-white text-xs font-semibold px-2 md:px-5 py-2 rounded-full shadow-lg animate-bounce pointer-events-none">
+              {outsideCount} cow{outsideCount > 1 ? "s" : ""} outside the boundary!
             </div>
           )}
 
@@ -249,50 +269,6 @@ const Boundary = () => {
           </MapContainer>
         </div>
 
-        {/* ── Bottom cow strip ── */}
-        <div className="bg-white border-t border-gray-200 px-4 py-3 flex gap-3 overflow-x-auto shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
-          {enrichedCows.map((cow) => (
-            <button
-              key={cow.id}
-              onClick={() =>
-                setSelectedCow(selectedCow?.id === cow.id ? null : cow)
-              }
-              className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all
-                ${
-                  selectedCow?.id === cow.id
-                    ? "border-emerald-400 bg-emerald-50 shadow-sm"
-                    : cow.inside
-                      ? "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
-                      : "border-red-300 bg-red-50 animate-pulse"
-                }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full flex-shrink-0 ${cow.inside ? "bg-emerald-500" : "bg-red-500"}`}
-              />
-              <div>
-                <p className="text-xs font-semibold text-gray-800">
-                  {cow.name}
-                </p>
-                <p
-                  className={`text-xs ${cow.inside ? "text-emerald-500" : "text-red-500"}`}
-                >
-                  {cow.inside ? "Safe" : "Outside!"}
-                </p>
-              </div>
-              <div className="ml-1 w-10">
-                <div className="bg-gray-100 rounded-full h-1">
-                  <div
-                    className={`h-1 rounded-full ${cow.battery > 50 ? "bg-emerald-400" : cow.battery > 20 ? "bg-amber-400" : "bg-red-400"}`}
-                    style={{ width: `${cow.battery}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-400 text-right mt-0.5">
-                  {cow.battery}%
-                </p>
-              </div>
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   );
