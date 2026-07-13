@@ -47,14 +47,34 @@ const LiveMap = () => {
   return (
     <div className="flex flex-col h-[calc(100vh-120px)]">
       {/* Header */}
-      <div className="mb-3">
-        <h1 className="text-[18px] md:text-2xl font-bold text-green-600">
-          Live Map
-        </h1>
-      </div>
+      <div className="flex md:mb-3 justify-between items-center gap-2">
+          <h1 className="text-[18px] md:text-2xl font-bold text-green-600">
+            Live Map
+          </h1>
 
+          {outsideCows.length > 0 && (
+            <p
+              className="
+                text-[10px] 
+                sm:text-sm 
+                text-red-500 
+                bg-red-50 
+                border 
+                border-red-200 
+                rounded-full 
+                px-2 
+                sm:px-3 
+                py-1 
+                animate-bounce
+                whitespace-nowrap
+              "
+            >
+              {outsideCows.length} cow{outsideCows.length > 1 ? "s" : ""} outside
+            </p>
+          )}
+        </div>
       {/* Map */}
-      <div className="h-[38vh] md:flex-1 md:h-auto rounded-xl overflow-hidden border m-5 border-gray-300">
+      <div className="h-[45vh] md:flex-1 md:h-auto rounded-xl overflow-hidden border m-5 border-gray-300">
         <Boundary />
       </div>
       {/* Mobile Summary */}

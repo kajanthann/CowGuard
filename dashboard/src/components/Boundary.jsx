@@ -36,7 +36,7 @@ function cornerIcon(index) {
   });
 }
 
-function cowIcon(inside, isSelected) {
+function cowIcon(inside, isSelected, isMobile) {
   const size = isSelected ? 30 : 25;
 
   const ring = isSelected
@@ -45,20 +45,21 @@ function cowIcon(inside, isSelected) {
       },0 4px 12px rgba(0,0,0,0.35);`
     : "box-shadow:0 3px 8px rgba(0,0,0,0.25);";
 
-  const cowSvg = renderToStaticMarkup(
-    <PiCowThin
-      size={isSelected ? 18 : 14}
-      color="white"
-      strokeWidth={1.5}
-    />
-  );
+  // On mobile, show a plain rounded dot instead of the cow icon
+  const innerContent = isMobile
+    ? ""
+    : renderToStaticMarkup(
+        <PiCowThin size={isSelected ? 18 : 14} color="white" strokeWidth={1.5} />
+      );
+
+  const dotSize = isMobile ? (isSelected ? 12 : 10) : size;
 
   return L.divIcon({
     className: "",
     html: `
       <div style="
-        width:${size}px;
-        height:${size}px;
+        width:${dotSize}px;
+        height:${dotSize}px;
         border-radius:50%;
         background:${inside ? "#16a34a" : "#dc2626"};
         border:2px solid white;
@@ -68,11 +69,11 @@ function cowIcon(inside, isSelected) {
         ${ring}
         transition:all .2s;
       ">
-        ${cowSvg}
+        ${innerContent}
       </div>
     `,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
+    iconSize: [dotSize, dotSize],
+    iconAnchor: [dotSize / 2, dotSize / 2],
   });
 }
 
@@ -155,6 +156,19 @@ const Boundary = () => {
   const [mode, setMode] = useState("bounded");
   const [selectedCow, setSelectedCow] = useState(null);
 
+  // Track mobile vs desktop so we can simplify markers on small screens
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const handleChange = (e) => setIsMobile(e.matches);
+
+    mq.addEventListener("change", handleChange);
+    return () => mq.removeEventListener("change", handleChange);
+  }, []);
+
   const polygonPositions = boundary.map((p) => [p.lat, p.lng]);
   const allMapPoints = [
     ...polygonPositions,
@@ -167,9 +181,6 @@ const Boundary = () => {
   const outsideCount = enrichedCows.filter((c) => !c.inside).length;
 
   return (
-    // FIX: was `h-screen`, which ignores whatever height the parent gives it
-    // (e.g. 30vh on mobile from LiveMap.jsx). `h-full` makes it respect the
-    // parent container's actual height on every breakpoint.
     <div className="flex h-full bg-gray-50 text-gray-800 font-sans overflow-hidden">
       {/* ── Map area ── */}
       <div className="flex-1 flex flex-col h-full">
@@ -203,7 +214,7 @@ const Boundary = () => {
 
           {/* Alert banner */}
           {outsideCount > 0 && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] bg-red-500 text-white text-[11px] md:text-xs font-semibold px-2 md:px-5 py-2 rounded-full shadow-lg animate-bounce pointer-events-none">
+            <div className="hidden md:block absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] bg-red-500 text-white text-[10px] md:text-xs font-semibold px-2 md:px-5 py-2 rounded-full shadow-lg animate-bounce pointer-events-none">
               {outsideCount} cow{outsideCount > 1 ? "s" : ""} outside the boundary!
             </div>
           )}
@@ -231,27 +242,28 @@ const Boundary = () => {
               }}
             />
 
-            {/* Boundary corner markers */}
-            {boundary.map((point, index) => (
-              <Marker
-                key={`corner-${index}`}
-                position={[point.lat, point.lng]}
-                icon={cornerIcon(index)}
-              >
-                <Popup>
-                  <strong>Point {index + 1}</strong>
-                  <br />
-                  {point.lat.toFixed(6)}, {point.lng.toFixed(6)}
-                </Popup>
-              </Marker>
-            ))}
+            {/* Boundary corner markers — hidden on mobile */}
+            {!isMobile &&
+              boundary.map((point, index) => (
+                <Marker
+                  key={`corner-${index}`}
+                  position={[point.lat, point.lng]}
+                  icon={cornerIcon(index)}
+                >
+                  <Popup>
+                    <strong>Point {index + 1}</strong>
+                    <br />
+                    {point.lat.toFixed(6)}, {point.lng.toFixed(6)}
+                  </Popup>
+                </Marker>
+              ))}
 
             {/* Cow markers */}
             {enrichedCows.map((cow) => (
               <Marker
                 key={cow.id}
                 position={[cow.lat, cow.lng]}
-                icon={cowIcon(cow.inside, selectedCow?.id === cow.id)}
+                icon={cowIcon(cow.inside, selectedCow?.id === cow.id, isMobile)}
                 eventHandlers={{ click: () => setSelectedCow(cow) }}
               >
                 <Popup>
@@ -290,7 +302,6 @@ const Boundary = () => {
             ))}
           </MapContainer>
         </div>
-
       </div>
     </div>
   );
