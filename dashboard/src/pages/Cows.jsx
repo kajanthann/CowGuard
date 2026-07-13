@@ -81,7 +81,7 @@ const Cows = () => {
 
             <div className="mt-3 text-sm space-y-1">
               <p>
-                <b>Breed:</b> {cow.breed}
+                <b>Breed:</b> {cow.breed || "Native"}
               </p>
               <div className="flex items-center justify-between">
                 <p className="flex items-center gap-2">
@@ -150,7 +150,9 @@ const Cows = () => {
               <tr key={cow.cowId} className="border-b border-gray-300 hover:bg-gray-50">
                 <td className="p-3 font-mono">{cow.cowId}</td>
                 <td className="p-3">{cow.name}</td>
-                <td className="p-3">{cow.breed}</td>
+                <td className="p-3">
+                  {cow.breed && cow.breed.trim() !== "" ? cow.breed : "Native"}
+                </td>
                 <td className="p-3 font-mono text-xs">{cow.deviceId}</td>
 
                 <td className="p-3 text-center">

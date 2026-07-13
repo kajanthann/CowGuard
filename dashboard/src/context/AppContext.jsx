@@ -183,81 +183,130 @@ const AppContextProvider = ({ children }) => {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    const cowsRef = ref(database, "cows");
+useEffect(() => {
+  const cowsRef = ref(database, "cows");
 
-    const unsubscribe = onValue(cowsRef, (snapshot) => {
-      const data = snapshot.val();
+  const unsubscribe = onValue(cowsRef, (snapshot) => {
+    const data = snapshot.val();
 
-      let firebaseCows = [];
+    let firebaseCows = [];
 
-      if (data) {
-        setDeviceData(data);
+    const now = new Date();
 
-        firebaseCows = Object.keys(data).map((cowId) => {
-          const cow = data[cowId];
+    const currentDate = now.toLocaleDateString();
 
-          const statusData = getStatus(cow.receivedAt, cow.date, cow.time);
+    const currentTime = now.toLocaleTimeString();
 
-          return {
-            id: cowId,
 
-            cowId,
+    if (data) {
 
-            name: cow.name || cowId,
+      setDeviceData(data);
 
-            breed: cow.breed || "-",
+      firebaseCows = Object.keys(data).map((cowId) => {
 
-            deviceId: cow.deviceId || cowId,
+        const cow = data[cowId];
 
-            lat: cow.latitude || 0,
+        const statusData = getStatus(
+          cow.receivedAt,
+          cow.date,
+          cow.time
+        );
 
-            lng: cow.longitude || 0,
 
-            altitude: cow.altitude || 0,
+        return {
 
-            speed: cow.speed || 0,
+          id: cowId,
 
-            satellites: cow.satellites || 0,
+          cowId,
 
-            hdop: cow.hdop || 0,
+          name: cow.name || cowId,
 
-            packetID: cow.packetID || 0,
+          breed: cow.breed || "",
 
-            rssi: cow.rssi || "-",
+          deviceId: cow.deviceId || cowId,
 
-            snr: cow.snr || "-",
 
-            date: cow.date,
+          lat: cow.latitude || 0,
 
-            time: cow.time,
+          lng: cow.longitude || 0,
 
-            receivedAt: cow.receivedAt,
 
-            status: statusData.status,
+          altitude: cow.altitude || 0,
 
-            lastSeenDate: statusData.lastSeenDate,
+          speed: cow.speed || 0,
 
-            lastSeenTime: statusData.lastSeenTime,
+          satellites: cow.satellites || 0,
 
-            lastSeenText: statusData.lastSeenText,
+          hdop: cow.hdop || 0,
 
-            battery: cow.battery || 100,
 
-            isDummy: false,
-          };
-        });
-      }
+          packetID: cow.packetID || 0,
 
-      if (ENABLE_DUMMY_DATA) {
-        setCows([...firebaseCows, ...DUMMY_COWS]);
-      } else {
-        setCows(firebaseCows);
-      }
-    });
+          rssi: cow.rssi || "-",
 
-    return () => unsubscribe();
-  }, [refresh]);
+          snr: cow.snr || "-",
+
+
+          date: cow.date || currentDate,
+
+          time: cow.time || currentTime,
+
+
+          receivedAt: cow.receivedAt || Date.now(),
+
+
+          status: statusData.status,
+
+
+          lastSeenDate:
+            statusData.lastSeenDate !== "-"
+              ? statusData.lastSeenDate
+              : currentDate,
+
+
+          lastSeenTime:
+            statusData.lastSeenTime !== "-"
+              ? statusData.lastSeenTime
+              : currentTime,
+
+
+          lastSeenText:
+            statusData.lastSeenText !== "No Data"
+              ? statusData.lastSeenText
+              : "Just now",
+
+
+          battery: cow.battery ?? 100,
+
+
+          isDummy:false,
+        };
+
+      });
+
+    }
+
+
+    if (ENABLE_DUMMY_DATA) {
+
+      setCows([
+        ...firebaseCows,
+        ...DUMMY_COWS
+      ]);
+
+    } else {
+
+      setCows(firebaseCows);
+
+    }
+
+
+  });
+
+
+  return () => unsubscribe();
+
+}, [refresh]);
 
   const enrichedCows = cows.map((cow) => ({
     ...cow,

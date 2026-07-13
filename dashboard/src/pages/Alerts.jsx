@@ -178,9 +178,9 @@ const Alerts = () => {
             {filteredAlerts.map((alert) => (
               <tr key={alert.cowId} className="border-b border-gray-300 hover:bg-gray-50">
                 <td className="p-3 text-xs">
-                  {alert.cow.lastSeenDate}
+                  {alert.cow.lastSeenDate || new Date().toLocaleDateString()}
                   <br />
-                  {alert.cow.lastSeenTime}
+                  {alert.cow.lastSeenTime || new Date().toLocaleTimeString()}
                 </td>
 
                 <td className="p-3 font-semibold">
