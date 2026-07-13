@@ -55,6 +55,7 @@ const LiveMap = () => {
           {outsideCows.length > 0 && (
             <p
               className="
+                block md:hidden
                 text-[10px] 
                 sm:text-sm 
                 text-red-500 
