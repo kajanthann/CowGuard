@@ -203,7 +203,7 @@ const Boundary = () => {
 
           {/* Alert banner */}
           {outsideCount > 0 && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] bg-red-500 text-white text-xs font-semibold px-2 md:px-5 py-2 rounded-full shadow-lg animate-bounce pointer-events-none">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] bg-red-500 text-white text-[11px] md:text-xs font-semibold px-2 md:px-5 py-2 rounded-full shadow-lg animate-bounce pointer-events-none">
               {outsideCount} cow{outsideCount > 1 ? "s" : ""} outside the boundary!
             </div>
           )}
